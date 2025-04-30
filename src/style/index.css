@@ -22,7 +22,7 @@ body {
 
 h1 {
   font-size: 70px;
-  color: #dbdbdb;
+  color: #5a8baf;
   font-weight: 300;
   margin-bottom: 20px;
   letter-spacing: 2px;
@@ -67,8 +67,8 @@ input[type="text"]:focus {
 
 .delete {
   cursor: pointer;
-  font-size: 20px;
-  color: #ff675c;
+  font-size: 10px;
+  color: #aa716d;
   opacity: 0;  /* corrección */
   transition: opacity 0.3s ease; /* corrección */
 }
