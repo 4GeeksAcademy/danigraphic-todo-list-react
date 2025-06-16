@@ -1,56 +1,121 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const Home = () => {
-  // Estado para la tarea nueva
   const [task, setTask] = useState("");
-
-  // Estado para la lista de tareas
   const [tasks, setTasks] = useState([]);
 
-  // Función para manejar la tecla Enter
+  useEffect(() => {
+    fetch("https://playground.4geeks.com/todo/users/danigraphic", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    }).then(resp => {
+      if (!resp.ok) {
+        console.error("Error al crear usuario");
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    fetch("https://playground.4geeks.com/todo/users/danigraphic")
+      .then(resp => resp.json())
+      .then(data => {
+        if (Array.isArray(data.todos)) {
+          setTasks(data.todos);
+        }
+      })
+      .catch(error => {
+        console.error("Error al obtener tareas", error);
+      });
+  }, []);
+
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && task.trim() !== "") {
-      setTasks([...tasks, task.trim()]);
-      setTask(""); // Limpiar el input después de agregar
+      const newTask = {
+        label: task.trim(),
+        done: false
+      };
+
+      fetch("https://playground.4geeks.com/todo/todos/danigraphic", {
+        method: "POST",
+        body: JSON.stringify(newTask),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+        .then(resp => resp.json())
+        .then(() => {
+          setTask("");
+          fetch("https://playground.4geeks.com/todo/users/danigraphic")
+            .then(resp => resp.json())
+            .then(data => setTasks(data.todos));
+        })
+        .catch(error => console.error("Error al agregar tarea", error));
     }
   };
 
-  // Función para eliminar una tarea
-  const removeTask = (indexToRemove) => {
-    const updated = tasks.filter((_, index) => index !== indexToRemove);
-    setTasks(updated); // Actualizar las tareas sin la tarea eliminada
+  const handleDelete = (taskId) => {
+    fetch(`https://playground.4geeks.com/todo/todos/${taskId}`, {
+      method: "DELETE"
+    })
+      .then(() => {
+        fetch("https://playground.4geeks.com/todo/users/danigraphic")
+          .then(resp => resp.json())
+          .then(data => setTasks(data.todos));
+      })
+      .catch(error => console.error("Error al eliminar tarea", error));
+  };
+
+  const handleClearAll = () => {
+    fetch("https://playground.4geeks.com/todo/users/danigraphic", {
+      method: "DELETE"
+    })
+      .then(() => setTasks([]))
+      .catch(error => console.error("Error al limpiar tareas", error));
   };
 
   return (
     <div className="todo-container">
       <h1>todos</h1>
+      <input
+        type="text"
+        placeholder="Add your task"
+        value={task}
+        onChange={(e) => setTask(e.target.value)}
+        onKeyDown={handleKeyDown}
+      />
       <div className="task-box">
-        <input
-          type="text"
-          placeholder="Add your task"
-          value={task}
-          onChange={(e) => setTask(e.target.value)} 
-          onKeyDown={handleKeyDown} 
-        />
-
-       
         {tasks.length === 0 ? (
-          <p className="no-tasks">No hay tareas, añadir tareas</p>
+          <div className="no-tasks">No hay tareas, añadir tareas</div>
         ) : (
-          
-          tasks.map((t, i) => (
-            <div key={i} className="task">
-              {t}
-			  <span className="delete" onClick={() => removeTask(i)}>❌</span>
+          tasks.map((item) => (
+            <div key={item.id} className="task">
+              <span>{item.label}</span>
+              <span className="delete" onClick={() => handleDelete(item.id)}>
+                ✕
+              </span>
             </div>
           ))
         )}
-
-        
-        <div className="counter">
-          {tasks.length} {tasks.length === 1 ? "item" : "items"} left
-        </div>
       </div>
+      <div className="counter">{tasks.length} item{tasks.length !== 1 ? "s" : ""} left</div>
+      <button
+        onClick={handleClearAll}
+        style={{
+          marginTop: "20px",
+          padding: "10px 20px",
+          backgroundColor: "#ff6b6b",
+          color: "#fff",
+          border: "none",
+          borderRadius: "30px",
+          fontSize: "14px",
+          cursor: "pointer",
+          boxShadow: "0 2px 6px rgba(0,0,0,0.15)"
+        }}
+      >
+        🗑️ Limpiar todas las tareas
+      </button>
     </div>
   );
 };
